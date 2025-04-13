@@ -6,6 +6,8 @@ function RagProject() {
   const [isLoading, setIsLoading] = useState(false); // State for loading indicator
   const [chatHistory, setChatHistory] = useState([]); // State for chat history
 
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
   const handleQueryChange = (event) => {
     setQuery(event.target.value); // Update query state
   };
@@ -21,7 +23,7 @@ function RagProject() {
     // Add the user's query to the chat history
     setChatHistory((prev) => [...prev, { sender: 'user', message: query }]);
 
-    fetch('http://localhost:5000/api/process', {
+    fetch(`${backendUrl}/api/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
