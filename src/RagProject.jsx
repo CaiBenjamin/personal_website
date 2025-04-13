@@ -4,16 +4,22 @@ function RagProject() {
   const [query, setQuery] = useState(''); // State for user input
   const [result, setResult] = useState(''); // State for query result
   const [isLoading, setIsLoading] = useState(false); // State for loading indicator
+  const [chatHistory, setChatHistory] = useState([]); // State for chat history
 
   const handleQueryChange = (event) => {
     setQuery(event.target.value); // Update query state
   };
 
   const handleSubmit = () => {
+    if (!query.trim()) return; // Prevent empty queries
+
     setIsLoading(true); // Show loading indicator
     const data = {
       query: query, // Use the query state
     };
+
+    // Add the user's query to the chat history
+    setChatHistory((prev) => [...prev, { sender: 'user', message: query }]);
 
     fetch('http://localhost:5000/api/process', {
       method: 'POST',
@@ -30,51 +36,89 @@ function RagProject() {
       })
       .then((result) => {
         console.log('Response from backend:', result); // Display the result from rag_lemonade.py
-        setResult(`Response: ${result.output || result.error}`); // Add "Response:" before the answer
+        setChatHistory((prev) => [...prev, { sender: 'bot', message: result.output || result.error }]);
       })
       .catch((error) => {
         console.error('Error sending data to backend:', error);
-        setResult('Error: Unable to process the request. Please try again later.');
+        setChatHistory((prev) => [...prev, { sender: 'bot', message: 'Error: Unable to process the request. Please try again later.' }]);
       })
-      .finally(() => setIsLoading(false)); // Hide loading indicator
+      .finally(() => {
+        setIsLoading(false); // Hide loading indicator
+        setQuery(''); // Clear the input field
+      });
   };
 
   return (
-    <div style={{ fontFamily: 'Sour Gummy, cursive' }}>
-      <h1>Rag Project Page</h1>
-      {/* Query Section */}
-      <div style={{ textAlign: 'left', padding: '20px' }}>
-        <h2>Query</h2>
+    <div style={{ fontFamily: 'Sour Gummy, cursive', maxWidth: '600px', margin: '0 auto' }}>
+      <h2>RAG For The Lemonade Stand Podcast</h2>
+    <p>The Lemonade Stand Podcast is a series that explores entrepreneurial journeys, sharing insights and lessons from successful business founders. 
+     s to inspire and educate listeners on building and scaling their own ventures. This RAG projects combines all the podcasts together and allows user to ask
+     any question the podcast has talked about.</p>
+
+      <div
+        style={{
+          // Removed the border property
+          borderRadius: '8px',
+          padding: '10px',
+          height: '400px',
+          overflowY: 'scroll',
+          marginBottom: '20px',
+        }}
+      >
+        {chatHistory.map((chat, index) => (
+          <div
+            key={index}
+            style={{
+              textAlign: chat.sender === 'user' ? 'right' : 'left',
+              margin: '10px 0',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '10px',
+                borderRadius: '8px',
+                backgroundColor: chat.sender === 'user' ? '#d1e7dd' : '#f8d7da',
+                color: chat.sender === 'user' ? '#0f5132' : '#842029',
+                maxWidth: '70%',
+                wordWrap: 'break-word',
+              }}
+            >
+              {chat.message}
+            </span>
+          </div>
+        ))}
+      </div>
+      {/* Query Input */}
+      <div style={{ display: 'flex', gap: '10px' }}>
         <input
           type="text"
           value={query}
           onChange={handleQueryChange}
-          placeholder="Enter your query here"
-          style={{ width: '100%', fontSize: '16px', padding: '10px' }}
+          placeholder="Type your message..."
+          style={{ flex: 1, fontSize: '16px', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
         />
+        <button
+          onClick={handleSubmit}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            borderRadius: '8px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+          }}
+        >
+          Send
+        </button>
       </div>
-      <button
-        onClick={handleSubmit}
-        style={{
-          marginTop: '20px',
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-        }}
-      >
-        Submit
-      </button>
       {/* Loading indicator */}
       {isLoading && (
         <div style={{ marginTop: '20px', fontSize: '16px', color: 'orange' }}>
           <p>Loading...</p>
         </div>
       )}
-      {/* Display the result at the bottom */}
-      <div style={{ marginTop: '20px', fontSize: '16px', color: 'blue', whiteSpace: 'pre-line' }}>
-        <h3>Result:</h3>
-        <p>{result}</p>
-      </div>
     </div>
   );
 }
