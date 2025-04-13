@@ -1,0 +1,14 @@
+openai 
+langchain
+langchain-openai
+langchain_pinecone
+langchain[docarray]
+docarray
+pydantic
+pytube 
+python-dotenv
+tiktoken 
+pinecone-client 
+scikit-learn
+ruff
+git+https://github.com/openai/whisper.git
