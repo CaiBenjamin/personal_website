@@ -1,3 +1,6 @@
+import irlCorgiOnBed from './assets/irl_corgi_on_bed.jpg';
+import corgiPupCup from './assets/corgi_pup_cup.jpg';
+
 function About() {
   return (
     <div style={{ position: 'relative', padding: '20px', fontFamily: 'Sour Gummy, cursive' }}>
@@ -10,7 +13,7 @@ function About() {
           <p>Thank you for taking a look at my profile, and I hope you reach out to connect.</p>
         </div>
         <img 
-          src="/src/assets/irl_corgi_on_bed.jpg" 
+          src={irlCorgiOnBed} 
           alt="Corgi Pup Cup" 
           style={{ 
             width: 'clamp(200px, 20vw, 300px)', 
@@ -36,7 +39,7 @@ function About() {
           </button>
         </div>
         <div style={{ marginLeft: '20px', textAlign: 'center' }}>
-          <img src="/src/assets/corgi_pup_cup.jpg" alt="One of my furbabies" style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }} />
+          <img src={corgiPupCup} alt="One of my furbabies" style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }} />
           <p style={{ marginTop: '10px', fontSize: '0.9em', fontStyle: 'italic' }}>One of my furbabies, Sir Poggletons!</p>
         </div>
       </div>

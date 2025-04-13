@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Projects from './Projects';
 import About from './About';
 import RagProject from './RagProject'; // Import the RagProject page
+import transparentCorgi from './assets/transparent_corgi.png';
+import sleepingCorgi from './assets/sleeping_corgi.png';
 
 function App() {
   const [fadeIn, setFadeIn] = useState(false);
@@ -16,7 +18,7 @@ function App() {
     <Router>
       <div id="root" style={{ opacity: fadeIn ? 1 : 0, transition: 'opacity 1s ease-in' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', fontFamily: "Chelsea Market" }}>
-          <img src="/src/assets/transparent_corgi.png" alt="Nap Time" style={{ width: '75px', height: '75px', objectFit: 'cover', position: 'absolute', left: '20px', top: '10px' }} />
+          <img src={transparentCorgi} alt="Nap Time" style={{ width: '75px', height: '75px', objectFit: 'cover', position: 'absolute', left: '20px', top: '10px' }} />
           <nav style={{ display: 'flex', alignItems: 'center', position: 'fixed', top: '10px', right: '20px', zIndex: 1000, fontFamily: "Chelsea Market" }}>
             <Link to="/" style={{ margin: '0 10px' }}>Home</Link>
             <Link to="/projects" style={{ margin: '0 10px' }}>Projects</Link>
@@ -35,7 +37,7 @@ function App() {
               <p style={{ maxWidth: '900px', margin: '0 auto' }}>
                 Benjamin Cai is a software developer who thrives on building innovative projects, solving complex problems, and exploring new technologies.
               </p>
-              <img src="/src/assets/sleeping_corgi.png" alt="Sleeping Corgi" style={{ width: '150px', height: '150px', objectFit: 'cover', position: 'absolute', right: '20px', top: '50%' }} />
+              <img src={sleepingCorgi} alt="Sleeping Corgi" style={{ width: '150px', height: '150px', objectFit: 'cover', position: 'absolute', right: '20px', top: '50%' }} />
             </div>
           } />
           <Route path="/projects" element={<Projects />} />
