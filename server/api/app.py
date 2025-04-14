@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from rag_lemonade.rag_lemonade import chain
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
 @app.route('/api/process', methods=['POST'])
 def process_query():
@@ -44,7 +44,7 @@ def handler(event, context):
 
     @Request.application
     def application(request):
-        return Response("Hello from Vercel!")
+        return Response("Hello from https://personal-website-c07i.onrender.com!")  # Updated URL
 
     app.wsgi_app = DispatcherMiddleware(application, {"/": app})
     return app.wsgi_app(event, context)
