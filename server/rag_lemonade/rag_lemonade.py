@@ -19,9 +19,6 @@ load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
-print("Loaded OPENAI_API_KEY AHHHHHHH:", OPENAI_API_KEY)
-print("Loaded OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
-
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY environment variable is not set. Please check your .env file.")
 
