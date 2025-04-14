@@ -3,6 +3,10 @@ from flask_cors import CORS
 import os
 import sys
 from dotenv import load_dotenv
+import logging  # Add logging import
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
@@ -20,12 +24,12 @@ def process_query():
         query = data.get('query', '')
         if not query:
             return jsonify({"error": "Query is required"}), 400
-        print("Received query:", query)  # Debugging log
+        logging.debug(f"Received query: {query}")  # Debugging log
         response = chain.invoke(query)
-        print("Response:", response)  # Debugging log
+        logging.debug(f"Response: {response}")  # Debugging log
         return jsonify({"output": response})
     except Exception as e:
-        print("Error in process_query:", str(e))  # Debugging log
+        logging.error(f"Error in process_query: {str(e)}")  # Error log
         return jsonify({"error": str(e)}), 500
 
 @app.route('/')
@@ -47,4 +51,4 @@ def handler(event, context):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
