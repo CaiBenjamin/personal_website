@@ -2,6 +2,11 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from rag_lemonade.rag_lemonade import chain
 
@@ -15,9 +20,12 @@ def process_query():
         query = data.get('query', '')
         if not query:
             return jsonify({"error": "Query is required"}), 400
+        print("Received query:", query)  # Debugging log
         response = chain.invoke(query)
+        print("Response:", response)  # Debugging log
         return jsonify({"output": response})
     except Exception as e:
+        print("Error in process_query:", str(e))  # Debugging log
         return jsonify({"error": str(e)}), 500
 
 @app.route('/')

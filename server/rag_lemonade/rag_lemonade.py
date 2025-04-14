@@ -11,10 +11,16 @@ from langchain_core.documents import Document  # or from langchain.schema import
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from flask import Flask, request, jsonify
 
-load_dotenv()
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+
+print("Loaded OPENAI_API_KEY AHHHHHHH:", OPENAI_API_KEY)
+print("Loaded OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY environment variable is not set. Please check your .env file.")
@@ -98,5 +104,4 @@ def process_query():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8000))  # Use PORT from environment or default to 8000
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=8000)
