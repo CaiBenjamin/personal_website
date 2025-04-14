@@ -2,15 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "server/api/app.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "src/main.jsx",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "server/api/app.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -20,7 +20,7 @@
     },
     {
       "src": "(.*)",
-      "dest": "src/main.jsx"
+      "dest": "/index.html"
     }
   ]
 }
