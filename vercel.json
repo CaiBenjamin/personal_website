@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/api/app.py"
+    },
+    {
+      "src": "(.*)",
+      "dest": "/dist/$1"
+    }
+  ]
+}

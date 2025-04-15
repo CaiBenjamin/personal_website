@@ -7,12 +7,24 @@ import RagProject from './RagProject'; // Import the RagProject page
 import transparentCorgi from './assets/transparent_corgi.png';
 import sleepingCorgi from './assets/sleeping_corgi.png';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
 function App() {
   const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
     setFadeIn(true);
   }, []);
+
+  const processData = (data) => {
+    fetch(`${backendUrl}/api/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  };
 
   return (
     <Router>

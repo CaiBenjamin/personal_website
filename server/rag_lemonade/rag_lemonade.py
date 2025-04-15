@@ -11,7 +11,10 @@ from langchain_core.documents import Document  # or from langchain.schema import
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from flask import Flask, request, jsonify
 
-load_dotenv()
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -98,4 +101,4 @@ def process_query():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8000)
