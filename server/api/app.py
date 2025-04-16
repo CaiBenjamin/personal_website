@@ -4,6 +4,16 @@ import os
 import sys
 from dotenv import load_dotenv
 import logging  # Add logging import
+from langchain_core.output_parsers import StrOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+from langchain_pinecone import PineconeVectorStore  # Added missing import
+from langchain_openai.embeddings import OpenAIEmbeddings  # Added missing import
+import pinecone
+from langchain_openai.chat_models import ChatOpenAI
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -11,12 +21,38 @@ logging.basicConfig(level=logging.DEBUG)
 # Load environment variables from .env file
 load_dotenv(dotenv_path="/Users/bcai/projects/personal_website/.env")
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from rag_lemonade.rag_lemonade import chain
 
+# Initialize embeddings
+embeddings = OpenAIEmbeddings()
+
+# Initialize Pinecone
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+
+if not PINECONE_API_KEY:
+    raise ValueError("Pinecone API key or environment is not set. Please check your .env file.")
+
+# Define chunking_configs and documents_raw for process_all_configs
+chunking_configs = {
+    "lemonade-stand-500": {"chunk_size": 500, "chunk_overlap": 20},
+    "lemonade-stand-podcast": {"chunk_size": 1000, "chunk_overlap": 20},
+    "lemonade-stand-2000": {"chunk_size": 2000, "chunk_overlap": 20},
+    "lemonade-stand-1000-extra-overlap": {"chunk_size": 1000, "chunk_overlap": 50},
+    "lemonade-stand-2000-extra-overlap": {"chunk_size": 2000, "chunk_overlap": 50},
+}
+
+# Convert documents_raw to a list of Document objects
+documents_raw = [
+    Document(page_content="Sample document content 1", metadata={}),
+    Document(page_content="Sample document content 2", metadata={}),
+]
+
 app = Flask(__name__)
 # Allow CORS for specific origins
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://personal-website-c07i.onrender.com"]}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:8000", "https://personal-website-c07i.onrender.com"]}})
 
 @app.after_request
 def add_cors_headers(response):
@@ -40,6 +76,10 @@ def process_query():
         logging.error(f"Error in process_query: {str(e)}")  # Error log
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/process', methods=['GET'])
+def process_query_get():
+    return "This endpoint only supports POST requests. Please send a POST request with a query.", 405
+
 @app.route('/api/process_all_configs', methods=['POST'])
 def process_query_all_configs():
     try:
@@ -50,6 +90,22 @@ def process_query_all_configs():
 
         logging.debug(f"Received query for all configs: {query}")  # Debugging log
         responses = {}
+
+        model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
+
+        parser = StrOutputParser()
+        chain = model | parser
+
+        template = """
+        Answer the question based on the context below. If you can't 
+        answer the question, reply "I don't know".
+
+        Context: {context}
+
+        Question: {question}
+        """
+
+        prompt = ChatPromptTemplate.from_template(template)
 
         for config_name, config in chunking_configs.items():
             try:
@@ -79,6 +135,10 @@ def process_query_all_configs():
     except Exception as e:
         logging.error(f"Error in process_query_all_configs: {str(e)}")  # Error log
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/process_all_configs', methods=['GET'])
+def process_query_all_configs_get():
+    return "This endpoint only supports POST requests. Please send a POST request with a query.", 405
 
 @app.route('/')
 def home():
