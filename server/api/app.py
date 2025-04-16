@@ -15,7 +15,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from rag_lemonade.rag_lemonade import chain
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
+# Allow CORS for specific origins
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://personal-website-c07i.onrender.com"]}})
 
 @app.route('/api/process', methods=['POST'])
 def process_query():
@@ -30,6 +31,46 @@ def process_query():
         return jsonify({"output": response})
     except Exception as e:
         logging.error(f"Error in process_query: {str(e)}")  # Error log
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/process_all_configs', methods=['POST'])
+def process_query_all_configs():
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        if not query:
+            return jsonify({"error": "Query is required"}), 400
+
+        logging.debug(f"Received query for all configs: {query}")  # Debugging log
+        responses = {}
+
+        for config_name, config in chunking_configs.items():
+            try:
+                logging.debug(f"Processing config: {config_name}")  # Debugging log
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=config['chunk_size'],
+                    chunk_overlap=config['chunk_overlap']
+                )
+                documents = text_splitter.split_documents(documents_raw)
+
+                pinecone_vectorstore = PineconeVectorStore(embedding=embeddings, index_name=config_name)
+                chain = (
+                    {"context": pinecone_vectorstore.as_retriever(), "question": RunnablePassthrough()}
+                    | prompt
+                    | model
+                    | parser
+                )
+
+                response = chain.invoke(query)
+                responses[config_name] = response
+                logging.debug(f"Response for {config_name}: {response}")  # Debugging log
+            except Exception as e:
+                logging.error(f"Error processing config {config_name}: {str(e)}")  # Error log
+                responses[config_name] = f"Error: {str(e)}"
+
+        return jsonify({"outputs": responses})
+    except Exception as e:
+        logging.error(f"Error in process_query_all_configs: {str(e)}")  # Error log
         return jsonify({"error": str(e)}), 500
 
 @app.route('/')
