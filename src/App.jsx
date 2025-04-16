@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Projects from './Projects';
 import About from './About';
 import RagProject from './RagProject'; // Import the RagProject page
+import ChunkSizeOverlap from './ChunkSizeOverlap'; // Import the ChunkSizeOverlap page
 import transparentCorgi from './assets/transparent_corgi.png';
 import sleepingCorgi from './assets/sleeping_corgi.png';
 
@@ -56,6 +57,7 @@ function App() {
           <Route path="/about" element={<About />} />
           {/* Define the route for RagProject */}
           <Route path="/projects/RagProject" element={<RagProject />} />
+          <Route path="/chunk-size-overlap" element={<ChunkSizeOverlap />} />
           <Route path="*" element={<div>Page Not Found</div>} /> {/* Fallback route */}
         </Routes>
       </div>

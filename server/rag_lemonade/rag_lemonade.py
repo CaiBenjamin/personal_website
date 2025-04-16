@@ -40,6 +40,63 @@ Context: {context}
 Question: {question}
 """
 
+find_relevant_template = """
+Identify the most relevant sentence or phrase in the context that answers the question. If no such sentence exists, say "I don't know."
+
+Context: {context}
+
+Question: {question}
+"""
+
+factua_template = """
+Give a factual answer using only the context. Do not speculate or fill in gaps. If the context lacks the necessary info, respond with "I don't know."
+
+Context: {context}
+
+Question: {question}
+"""
+
+# Define multiple prompt templates for testing
+prompt_templates = {
+    "default": """
+    Answer the question based on the context below. If you can't 
+    answer the question, reply "I don't know".
+
+    Context: {context}
+
+    Question: {question}
+    """,
+    "find_relevant": """
+    Identify the most relevant sentence or phrase in the context that answers the question. If no such sentence exists, say "I don't know."
+
+    Context: {context}
+
+    Question: {question}
+    """,
+    "factual": """
+    Give a factual answer using only the context. Do not speculate or fill in gaps. If the context lacks the necessary info, respond with "I don't know."
+
+    Context: {context}
+
+    Question: {question}
+    """,
+    "summarize": """
+    Summarize the context below in one or two sentences, focusing on the key points. If the context is unclear, say "I don't know."
+
+    Context: {context}
+    """,
+    "explain": """
+    Explain the context below in simple terms as if you were teaching it to a beginner. If the context is unclear, say "I don't know."
+
+    Context: {context}
+    """,
+    "compare": """
+    Compare and contrast the key points in the context below. Highlight similarities and differences. If the context lacks sufficient information, say "I don't know."
+
+    Context: {context}
+    """
+}
+
 prompt = ChatPromptTemplate.from_template(template)
 
 # Construct the absolute path to the transcript file
@@ -71,7 +128,7 @@ chunking_configs = {
 # Define batch size for processing documents
 # BATCH_SIZE = 100  # Adjust this value based on Pinecone's constraints and your requirements
 
-# Add documents to Pinecone in batches
+## Add documents to Pinecone in batches
 # try:
 #     pinecone_vectorstore = PineconeVectorStore(embedding=embeddings, index_name=index_name)
 
@@ -91,6 +148,19 @@ chain = (
     | model
     | parser
 )
+
+# Function to process and print prompts with chunks
+def process_and_print_prompts():
+    for prompt_name, prompt_template in prompt_templates.items():
+        print(f"\nUsing Prompt: {prompt_name}\n")
+        for i in range(0, len(documents), 5):  # Process 5 chunks at a time
+            chunk_batch = documents[i:i + 5]
+            context = "\n".join([chunk.page_content for chunk in chunk_batch])
+            formatted_prompt = prompt_template.format(context=context, question="What is the main idea?")
+            print(f"Prompt:\n{formatted_prompt}\n")
+
+# Call the function to process and print prompts
+process_and_print_prompts()
 
 app = Flask(__name__)
 
