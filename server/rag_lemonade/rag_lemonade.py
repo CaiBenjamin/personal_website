@@ -10,6 +10,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_core.documents import Document  # or from langchain.schema import Document depending on your version
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from flask import Flask, request, jsonify
+import logging
 
 from dotenv import load_dotenv
 
@@ -59,6 +60,14 @@ embeddings = OpenAIEmbeddings()
 
 index_name = "lemonade-stand-podcast"
 
+chunking_configs = {
+    "lemonade-stand-podcast": {"chunk_size": 1000, "chunk_overlap": 20},  # Renamed from lemonade-stand-podcast
+    "lemonade-stand-2000": {"chunk_size": 2000, "chunk_overlap": 20},
+    "lemonade-stand-500": {"chunk_size": 500, "chunk_overlap": 20},
+    "lemonade-stand-2000-extra-overlap": {"chunk_size": 2000, "chunk_overlap": 50},  # New index
+    "lemonade-stand-1000-extra-overlap": {"chunk_size": 1000, "chunk_overlap": 50},  # New index
+}
+
 # Define batch size for processing documents
 # BATCH_SIZE = 100  # Adjust this value based on Pinecone's constraints and your requirements
 
@@ -85,6 +94,8 @@ chain = (
 
 app = Flask(__name__)
 
+logging.basicConfig(level=logging.DEBUG)
+
 @app.route('/api/process', methods=['POST'])
 def process_query():
     data = request.get_json()
@@ -98,6 +109,46 @@ def process_query():
         response = chain.invoke(query)
         return jsonify({"output": response})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/process_all_configs', methods=['POST'])
+def process_query_all_configs():
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        if not query:
+            return jsonify({"error": "Query is required"}), 400
+
+        logging.debug(f"Received query for all configs: {query}")  # Debugging log
+        responses = {}
+
+        for config_name, config in chunking_configs.items():
+            try:
+                logging.debug(f"Processing config: {config_name}")  # Debugging log
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=config['chunk_size'],
+                    chunk_overlap=config['chunk_overlap']
+                )
+                documents = text_splitter.split_documents(documents_raw)
+
+                pinecone_vectorstore = PineconeVectorStore(embedding=embeddings, index_name=config_name)
+                chain = (
+                    {"context": pinecone_vectorstore.as_retriever(), "question": RunnablePassthrough()}
+                    | prompt
+                    | model
+                    | parser
+                )
+
+                response = chain.invoke(query)
+                responses[config_name] = response
+                logging.debug(f"Response for {config_name}: {response}")  # Debugging log
+            except Exception as e:
+                logging.error(f"Error processing config {config_name}: {str(e)}")  # Error log
+                responses[config_name] = f"Error: {str(e)}"
+
+        return jsonify({"outputs": responses})
+    except Exception as e:
+        logging.error(f"Error in process_query_all_configs: {str(e)}")  # Error log
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
