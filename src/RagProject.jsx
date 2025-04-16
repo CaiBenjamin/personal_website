@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const chunking_configs = {
   "lemonade-stand-podcast": {"chunk_size": 1000, "chunk_overlap": 20},
@@ -8,12 +9,47 @@ const chunking_configs = {
   "lemonade-stand-1000-extra-overlap": {"chunk_size": 1000, "chunk_overlap": 50},
 };
 
+const prompt_templates = {
+  default: `Answer the question based on the context below. If you can't 
+  answer the question, reply "I don't know".
+
+  Context: {context}
+
+  Question: {question}`,
+  find_relevant: `Identify the most relevant sentence or phrase in the context that answers the question. If no such sentence exists, say "I don't know."
+
+  Context: {context}
+
+  Question: {question}`,
+  factual: `Give a factual answer using only the context. Do not speculate or fill in gaps. If the context lacks the necessary info, respond with "I don't know."
+
+  Context: {context}
+
+  Question: {question}`,
+  summarize: `Summarize the context below in one or two sentences, focusing on the key points. If the context is unclear, say "I don't know."
+
+  Context: {context}`,
+  explain: `Explain the context below in simple terms as if you were teaching it to a beginner. If the context is unclear, say "I don't know."
+
+  Context: {context}`,
+  compare: `Compare and contrast the key points in the context below. Highlight similarities and differences. If the context lacks sufficient information, say "I don't know."
+
+  Context: {context}`,
+};
+
+const documents = [
+  { page_content: "Chunk 1 content goes here." },
+  { page_content: "Chunk 2 content goes here." },
+  { page_content: "Chunk 3 content goes here." },
+  { page_content: "Chunk 4 content goes here." },
+  { page_content: "Chunk 5 content goes here." },
+];
+
 function RagProject() {
   const [query, setQuery] = useState(''); // State for user input
   const [result, setResult] = useState(''); // State for query result
   const [isLoading, setIsLoading] = useState(false); // State for loading indicator
   const [chatHistory, setChatHistory] = useState([]); // State for chat history
-  const [allConfigsQuery, setAllConfigsQuery] = useState(''); // Separate state for all configs query
 
   const backendUrl = window.location.hostname === 'localhost' 
     ? 'http://localhost:8000' 
@@ -21,10 +57,6 @@ function RagProject() {
 
   const handleQueryChange = (event) => {
     setQuery(event.target.value); // Update query state
-  };
-
-  const handleAllConfigsQueryChange = (event) => {
-    setAllConfigsQuery(event.target.value); // Update allConfigsQuery state
   };
 
   const handleSubmit = () => {
@@ -62,42 +94,6 @@ function RagProject() {
       .finally(() => {
         setIsLoading(false); // Hide loading indicator
         setQuery(''); // Clear the input field
-      });
-  };
-
-  const handleSubmitAllConfigs = () => {
-    if (!allConfigsQuery.trim()) return; // Prevent empty queries
-
-    setIsLoading(true); // Show loading indicator
-    const data = {
-      query: allConfigsQuery, // Use the allConfigsQuery state
-    };
-
-    fetch(`${backendUrl}/api/process_all_configs`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        console.log('Response from backend for all configs:', result); // Display the result
-        setResult(result); // Update the result state
-        setChatHistory((prev) => [...prev, { sender: 'bot', message: result.output || result.error }]);
-      })
-      .catch((error) => {
-        console.error('Error sending data to backend for all configs:', error);
-        setChatHistory((prev) => [...prev, { sender: 'bot', message: 'Error: Unable to process the request for all configurations. Please try again later.' }]);
-      })
-      .finally(() => {
-        setIsLoading(false); // Hide loading indicator
-        // Removed setAllConfigsQuery('') to keep the query displayed
       });
   };
 
@@ -173,88 +169,11 @@ function RagProject() {
    
       {/* Section Title for Chunking Configurations */}
       <div style={{ marginTop: '40px', textAlign: 'center' }}>
-        <h2>Exploring How Chunk Size and Overlap Can Affect Outputs</h2>
-      </div>
-
-      <div style={{ marginTop: '20px', textAlign: 'left' }}>
+        <h2>Explore How Chunk Size and Overlap Can Affect Outputs</h2>
         <p>
-          Chunk size and overlap can play a huge role in how well the data RAG can work, but it’s not a one size fits all glove and can heavily depend on the data source you're trying to work on as well. For example, an FAQ with typically short questions and answers might require a small chunk size like 100-200 characters. For a long technical document, you might need a lot of context and larger chunks like 1000-2000 characters or even more, and sometimes you need a middle ground in between the two. Sometimes it can be helpful to have multiple different chunk sizes. Let me walk you through some of my tests:
-        </p>
-        <p>
-        <br />
-        </p>
-        <p>
-          <strong>Query:</strong> "What happened with the Mark Rober and Tesla video?"<br />
-          The longer chunks are generally better in my opinion because they provide full context and details about the situation, offering a complete explanation of what happened in the video. In contrast, shorter chunks might give responses like, 'The Mark Rober and Tesla video had a significant market impact, although it is not seen as a big scandal.' While this covers the main point, it lacks the necessary explanation, leaving the user wondering why it had such an impact. However, even the 2000-character context with 50 overlap can become lengthy and include extra unnecessary details.
-        </p>
-        <br />
-        <p>
-          <strong>Query:</strong> "What does Doug think about the consequences of infinite scroll?"<br />
-          Doug’s explanation of infinite scroll wasn’t delivered in a single uninterrupted paragraph — it was spread out, interwoven with anecdotes, side comments, and banter. The 50-character overlap helped connect context between banter between the other podcasters while the 20-character overlap struggled to maintain this connection.
-        </p>
-        <br />
-        <p>
-          Based on my testing, a 1000-character chunk with a 50-character overlap seems to be a good benchmark for podcasts with multiple speakers and dynamic banter. Shorter chunks often get lost in the conversation, while longer ones can sometimes include jokes or off-topic discussions, as the topics in the podcast can switch quickly.
-        </p>
-        <br />
-        <p>
-          Now that you’ve heard my explanation, you can test short, medium, and long chunk sizes. Unfortunately, I don't have the option to set custom presets due to the limited indexes I can have on Pinecone. However, if you reach out, I’d be happy to collaborate and test with you! :)
+          <Link to="/chunk-size-overlap">Learn more about chunk size and overlap</Link>
         </p>
       </div>
-
-      {/* Query Input for All Configurations */}
-      <div style={{ marginTop: '20px' }}>
-        <h3>Run Query Across All Chunking Configurations</h3>
-        <input
-          type="text"
-          value={allConfigsQuery}
-          onChange={handleAllConfigsQueryChange}
-          placeholder="Type your query..."
-          style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-        />
-        <button
-          onClick={handleSubmitAllConfigs}
-          style={{
-            marginTop: '10px',
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            borderRadius: '8px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-          }}
-        >
-          Run Query
-        </button>
-      </div>
-
-      {/* Display Results for All Configurations */}
-      {result && (
-        <div style={{ marginTop: '20px', textAlign: 'left' }}>
-          <h3>Results from All Chunking Configurations</h3>
-          <div>
-            <strong>Query:</strong> {allConfigsQuery}
-            <br />
-            {Object.entries(result.outputs).map(([config, response], index) => {
-              const chunkSize = chunking_configs[config]?.chunk_size || 'unknown';
-              const chunkOverlap = chunking_configs[config]?.chunk_overlap || 'unknown';
-              const displayConfig = (
-                <>
-                  Embedding with {chunkSize} characters and overlap with {chunkOverlap} characters
-                  <br />
-                </>
-              );
-              return (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <strong>{displayConfig}</strong>
-                  <div>{response}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
